@@ -9,18 +9,18 @@ from model import Model
 from dataset import Dataset
 from inference import inference
 
-from util import save_model, load_model, set_env, get_device
+from util import save_model, load_model, set_env, get_device, get_args
+
 
 def train_model(args, data_loaders, data_lengths, DEVICE):
     model = Model(args, data_lengths['nuniq_items'], DEVICE)
 
-    if torch.cuda.is_available():
-        if torch.cuda.device_count() > 1:
-            model = nn.DataParallel(model)
+    # if torch.cuda.is_available():
+    #     if torch.cuda.device_count() > 1:
+    #         model = nn.DataParallel(model)
 
     model = model.to(DEVICE)
     criterion = nn.CrossEntropyLoss()
-    #optimizer = optim.RMSprop(model.parameters(), lr=args.lr)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
 
     for epoch in range(args.max_epochs):
@@ -28,9 +28,9 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
         epoch_loss = {}        
         for phase in ['train', 'val']:
             if phase == 'train':
-                model.train(True)
+                model.train()
             else:
-                model.train(False)
+                model.eval()
 
             running_loss = 0.0
             #state_h, state_c = model.init_state(args.sequence_length)
@@ -42,10 +42,8 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
                 if phase == 'train':
                     optimizer.zero_grad()
 
-                x = sequence[:,:-1].to(DEVICE)
-                y = sequence[:,-1].to(DEVICE)
-                #print(x.shape)
-                #print(y.shape)
+                x = sequence[:, :-1].to(DEVICE)
+                y = sequence[:, -1].to(DEVICE)
 
                 state_h = tuple([each.data for each in state_h])
 
@@ -54,9 +52,6 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
 
                 loss = criterion(y_pred.float(), y.squeeze())
 
-                #state_h = state_h.detach()
-                #state_c = state_c.detach()
-
                 if phase == 'train':
                     loss.backward()
                     optimizer.step()
@@ -64,10 +59,11 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
                 running_loss += loss.data
 
             epoch_loss[phase] = running_loss / data_lengths[phase]
-            if phase == 'val' :
-                print('  {} Train loss: {:.4f} Val loss: {:.4f}'.format(phase, epoch_loss['train'], epoch_loss['val']))
+            if phase == 'val':
+                print('{} Train loss: {:.4f} Val loss: {:.4f}'.format(phase, epoch_loss['train'], epoch_loss['val']))
 
     return model
+
 
 def test_inference():
     data_dir = os.environ['SM_CHANNEL_EVAL']
@@ -84,29 +80,27 @@ def test_inference():
 
     inference(args, tr_dl, model, output_dir, DEVICE)
 
+
 if __name__ == '__main__':
-    args = set_env(kind='zf')   #kind=['ml' or 'zf']
+    set_env(kind='zf')   # kind=['ml' or 'zf']
+    args = get_args()
     data_dir = os.environ['SM_CHANNEL_TRAIN']
     model_dir = os.environ['SM_MODEL_DIR']
     DEVICE = get_device()
-
-    import os
-    if not os.path.exists('model'): os.makedirs('model')
-
+    if not os.path.exists('model'):
+        os.makedirs('model')
     data_path = os.path.join(data_dir, 'train_data.txt')
 
     dataset = Dataset(data_path, max_len=args.sequence_length)
     lengths = [int(len(dataset) * 0.8), len(dataset) - int(len(dataset) * 0.8)]
-    tr_dt, vl_dt = torch.utils.data.dataset.random_split(dataset, lengths)
-    tr_dl = torch.utils.data.DataLoader(tr_dt, args.batch_size)
-    vl_dl = torch.utils.data.DataLoader(vl_dt, args.batch_size)
-    data_loaders = {"train": tr_dl, "val": vl_dl}
-    data_lengths = {"train": len(tr_dl), "val": len(vl_dl), "nuniq_items": dataset.nuniq_items}
+    train_data, val_data = torch.utils.data.dataset.random_split(dataset, lengths)
+    train_loader = DataLoader(train_data, args.batch_size)
+    val_loader = torch.utils.data.DataLoader(val_data, args.batch_size)
+    data_loaders = {"train": train_loader, "val": val_loader}
+    data_lengths = {"train": len(train_loader), "val": len(val_loader), "nuniq_items": dataset.nuniq_items}
     print(DEVICE)
 
-
     model = train_model(args, data_loaders, data_lengths, DEVICE)
-
     save_model(model, model_dir)
 
-    #test_inference(args, DEVICE)
+    # test_inference(args, DEVICE)

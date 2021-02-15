@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import os
 
+
 class Model(nn.Module):
     def __init__(self, args, n_items, DEVICE):
         super(Model, self).__init__()

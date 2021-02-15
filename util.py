@@ -3,6 +3,7 @@ import os
 import argparse
 import tarfile
 
+
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--max-epochs', type=int, default=1)
@@ -15,38 +16,36 @@ def get_args():
     parser.add_argument('--lstm-size', type=int, default=256)
     parser.add_argument('--embedding-dim', type=int, default=256)
 
-    #args = parser.parse_args(args=[])  ##for colab
     args = parser.parse_args()
     return args
 
+
 def get_device():
     USE_CUDA = torch.cuda.is_available()
-    DEVICE = torch.device("cuda" if USE_CUDA else "cpu")
-    return DEVICE
+    device = torch.device("cuda" if USE_CUDA else "cpu")
+    return device
+
 
 def set_env(root_path='.', kind='ml'):
     # for train
-    if not 'SM_CHANNEL_TRAIN' in os.environ :
+    if 'SM_CHANNEL_TRAIN' not in os.environ:
         os.environ['SM_CHANNEL_TRAIN'] = '%s/data-%s/' % (root_path, kind)
-    if not 'SM_MODEL_DIR' in os.environ:
+    if 'SM_MODEL_DIR' not in os.environ:
         os.environ['SM_MODEL_DIR'] = '%s/model/' % root_path
 
     # for inference
-    if not 'SM_CHANNEL_EVAL' in os.environ :
+    if 'SM_CHANNEL_EVAL' not in os.environ:
         os.environ['SM_CHANNEL_EVAL'] = '%s/data-%s/' % (root_path, kind)
-    if not 'SM_CHANNEL_MODEL' in os.environ :
+    if 'SM_CHANNEL_MODEL' not in os.environ:
         os.environ['SM_CHANNEL_MODEL'] = '%s/model/' % root_path
-    if not 'SM_OUTPUT_DATA_DIR' in os.environ :
+    if 'SM_OUTPUT_DATA_DIR' not in os.environ:
         os.environ['SM_OUTPUT_DATA_DIR'] = '%s/output/' % root_path
 
-    args = get_args()
-
-    return args
 
 def save_model(model, model_dir):
     path = os.path.join(model_dir, 'model.pth')
     torch.save(model.state_dict(), path)
-    #torch.save(model.state_dict(), model_dir)
+
 
 def load_model(model, model_dir):
     tarpath = os.path.join(model_dir, 'model.tar.gz')
