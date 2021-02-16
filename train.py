@@ -8,6 +8,7 @@ import os
 from model import Model
 from dataset import Dataset
 from inference import inference
+from data_process import split_training_file
 
 from util import save_model, load_model, set_env, get_device, get_args
 
@@ -34,7 +35,7 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
                 model.eval()
 
             running_loss = 0.0
-            #state_h, state_c = model.init_state(args.sequence_length)
+            # state_h, state_c = model.init_state(args.sequence_length)
 
             state_h = model.init_state(args.sequence_length)
 
@@ -47,7 +48,7 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
 
                 state_h = tuple([each.data for each in state_h])
 
-                #y_pred, (state_h, state_c) = model(x, (state_h, state_c), DEVICE)
+                # y_pred, (state_h, state_c) = model(x, (state_h, state_c), DEVICE)
                 y_pred, state_h = model(x, state_h)     # y_pred size: (batch_size, item_count)
 
                 if phase == 'val':
@@ -92,12 +93,12 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
     set_env(kind='zf')   # kind=['ml' or 'zf']
     args = get_args()
-    data_dir = os.environ['SM_CHANNEL_TRAIN']
-    model_dir = os.environ['SM_MODEL_DIR']
+    # data_dir = os.environ['SM_CHANNEL_TRAIN']
+    # model_dir = os.environ['SM_MODEL_DIR']
     DEVICE = get_device()
     if not os.path.exists('model'):
         os.makedirs('model')
-    data_path = os.path.join(data_dir, 'train_data.txt')
+    data_path = os.path.join(args.data_dir, 'aug_train_data.txt')
 
     dataset = Dataset(data_path, max_len=args.sequence_length)
     lengths = [int(len(dataset) * 0.8), len(dataset) - int(len(dataset) * 0.8)]
@@ -110,6 +111,6 @@ if __name__ == '__main__':
     print('training on ', DEVICE)
 
     model = train_model(args, data_loaders, data_lengths, DEVICE)
-    save_model(model, model_dir)
+    save_model(model, args.model_dir)
 
     # test_inference(args, DEVICE)
