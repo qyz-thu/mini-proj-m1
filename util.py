@@ -6,7 +6,7 @@ import tarfile
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--max-epochs', type=int, default=1)
+    parser.add_argument('--max-epochs', type=int, default=5)
     
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--num-layers', type=int, default=3)

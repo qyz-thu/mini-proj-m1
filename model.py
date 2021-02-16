@@ -14,7 +14,7 @@ class Model(nn.Module):
         self.DEVICE =DEVICE 
 
         self.embedding = nn.Embedding(
-            num_embeddings=n_items,
+            num_embeddings=n_items + 1,
             embedding_dim=self.embedding_dim,
         )
         self.lstm = nn.LSTM(
@@ -24,7 +24,7 @@ class Model(nn.Module):
             dropout=0.2,
         )
         self.dropout = nn.Dropout(0.1)
-        self.fc = nn.Linear(self.lstm_size, n_items)
+        self.fc = nn.Linear(self.lstm_size, n_items + 1)
 
     def forward(self, x, prev_state):
         embed = self.embedding(x) #x[256,128], embed[256,128]

@@ -14,7 +14,6 @@ class Dataset(torch.utils.data.Dataset):
         self.dataset = self.load_dataset()
         self.dataset = self.dataset.reset_index()
 
-        self.dataset = self.dataset
         self.dataset.set_index("idx", inplace=True)  # to use index for comparing timestamp
         self.count = len(self.dataset)
 

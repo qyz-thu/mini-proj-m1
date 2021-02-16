@@ -27,7 +27,6 @@ def inference(args, dataloder, model, output_dir, DEVICE):
         f.write('%s\n' % topk)
 
         i += 1
-        #if i > 3 : break
 
     f.close()
 
@@ -47,8 +46,8 @@ if __name__ == '__main__':
 
     dataset = Dataset(data_path, max_len=args.sequence_length)
     # max_item_count = 3706     # for data_ml
-    max_item_count = 65427      # for data_zf
-    model = Model(args, max_item_count, DEVICE)
+    # max_item_count = 21077      # for data_zf
+    model = Model(args, dataset.nuniq_items, DEVICE)
 
     loader = DataLoader(dataset, 1)
 
