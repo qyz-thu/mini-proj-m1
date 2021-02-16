@@ -17,6 +17,7 @@ def get_args():
     parser.add_argument('--embedding-dim', type=int, default=256)
 
     parser.add_argument('--data_dir', default='./data/')
+    parser.add_argument('--eval_dir', default='./data-zf')
     parser.add_argument('--model_dir', default='./model/')
     parser.add_argument('--output_dir', default='./output/')
     parser.add_argument('--validate', action='store_true')

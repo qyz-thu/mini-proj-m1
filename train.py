@@ -8,7 +8,7 @@ import os
 from model import Model
 from dataset import Dataset
 from inference import inference
-from data_process import split_training_file
+from data_process import augment_training_file
 
 from util import save_model, load_model, set_env, get_device, get_args
 
@@ -73,20 +73,20 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
     return model
 
 
-def test_inference():
-    data_dir = os.environ['SM_CHANNEL_EVAL']
-    output_dir = os.environ['SM_OUTPUT_DATA_DIR']
-    data_path = os.path.join(data_dir, 'train_data.txt')
-    dataset = Dataset(data_dir, max_len=args.sequence_length)
-    tr_dl = torch.utils.data.DataLoader(dataset, 1)
-    model = Model(args, dataset.nuniq_items, DEVICE)
-    #model_dir = 'output/model.pth'
-    print("model_dir=", model_dir)
-
-    model = load_model(model, model_dir)
-    model = model.to(DEVICE)
-
-    inference(args, tr_dl, model, output_dir, DEVICE)
+# def test_inference():
+#     data_dir = os.environ['SM_CHANNEL_EVAL']
+#     output_dir = os.environ['SM_OUTPUT_DATA_DIR']
+#     data_path = os.path.join(data_dir, 'train_data.txt')
+#     dataset = Dataset(data_dir, max_len=args.sequence_length)
+#     tr_dl = torch.utils.data.DataLoader(dataset, 1)
+#     model = Model(args, dataset.nuniq_items, DEVICE)
+#     #model_dir = 'output/model.pth'
+#     print("model_dir=", model_dir)
+#
+#     model = load_model(model, model_dir)
+#     model = model.to(DEVICE)
+#
+#     inference(args, tr_dl, model, output_dir, DEVICE)
 
 
 if __name__ == '__main__':
@@ -98,17 +98,19 @@ if __name__ == '__main__':
     DEVICE = get_device()
     if not os.path.exists('model'):
         os.makedirs('model')
-    data_path = os.path.join(args.data_dir, 'aug_train_data.txt')
+    train_data_path = os.path.join(args.data_dir, 'aug_train.txt')
+    val_data_path = os.path.join(args.data_dir, 'valid.txt')
 
-    dataset = Dataset(data_path, max_len=args.sequence_length)
-    lengths = [int(len(dataset) * 0.8), len(dataset) - int(len(dataset) * 0.8)]
-    train_data, val_data = torch.utils.data.dataset.random_split(dataset, lengths)
-    train_loader = DataLoader(train_data, args.batch_size)
-    val_loader = torch.utils.data.DataLoader(val_data, args.batch_size)
+    train_dataset = Dataset(train_data_path, max_len=args.sequence_length)
+    val_dataset = Dataset(val_data_path, max_len=args.sequence_length)
+    # lengths = [int(len(dataset) * 0.8), len(dataset) - int(len(dataset) * 0.8)]
+    # train_data, val_data = torch.utils.data.dataset.random_split(dataset, lengths)
+    train_loader = DataLoader(train_dataset, args.batch_size)
+    val_loader = torch.utils.data.DataLoader(val_dataset, args.batch_size)
     data_loaders = {"train": train_loader, "val": val_loader}
     # data_lengths = {"train": len(train_loader), "val": len(val_loader), "nuniq_items": dataset.nuniq_items}
     data_lengths = {"train": len(train_loader), "val": len(val_loader), "nuniq_items": 21077}   # 21077 items
-    print('training on ', DEVICE)
+    print('training on', DEVICE)
 
     model = train_model(args, data_loaders, data_lengths, DEVICE)
     save_model(model, args.model_dir)
