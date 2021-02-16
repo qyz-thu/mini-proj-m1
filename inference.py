@@ -46,8 +46,8 @@ if __name__ == '__main__':
 
     dataset = Dataset(data_path, max_len=args.sequence_length)
     # max_item_count = 3706     # for data_ml
-    # max_item_count = 21077      # for data_zf
-    model = Model(args, dataset.nuniq_items, DEVICE)
+    max_item_count = 21077      # for data_zf
+    model = Model(args, max_item_count, DEVICE)
 
     loader = DataLoader(dataset, 1)
 
