@@ -1,6 +1,6 @@
 import os
 import torch
-from model import Model
+from model import Model, RecTrans
 from dataset import Dataset
 from torch.utils.data import DataLoader
 from util import load_model, get_args, get_device, set_env
@@ -12,17 +12,18 @@ def inference(args, dataloder, model, output_dir, DEVICE):
 
     model = model.to(DEVICE)
     model.eval()
-    state_h, state_c = model.init_state(args.sequence_length)
-    state_h = state_h.to(DEVICE)
-    state_c = state_h.to(DEVICE)
+    # state_h, state_c = model.init_state(args.sequence_length)
+    # state_h = state_h.to(DEVICE)
+    # state_c = state_h.to(DEVICE)
 
     i = 0
     for batch, (user_id, sequence) in enumerate(dataloder):
-        sequence = sequence[:,1:].to(DEVICE)
+        sequence = sequence[:, 1:].to(DEVICE)
 
-        y_pred, (state_h, state_c) = model(sequence, (state_h, state_c))
+        # y_pred, (state_h, state_c) = model(sequence, (state_h, state_c))
         #y = int(torch.argmax(y_pred).data)
         #f.write('%s\n' % y)
+        y_pred = model(sequence)
         topk = torch.topk(y_pred, 10)[1].data[0].tolist()
         f.write('%s\n' % topk)
 
@@ -47,7 +48,8 @@ if __name__ == '__main__':
     dataset = Dataset(data_path, max_len=args.sequence_length)
     # max_item_count = 3706     # for data_ml
     max_item_count = 21077      # for data_zf
-    model = Model(args, max_item_count, DEVICE)
+    # model = Model(args, max_item_count, DEVICE)
+    model = RecTrans(args, max_item_count, DEVICE)
 
     loader = DataLoader(dataset, 1)
 
