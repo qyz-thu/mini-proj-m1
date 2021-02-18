@@ -9,13 +9,17 @@ from model import Model, RecTrans
 from dataset import Dataset
 from inference import inference
 from data_process import augment_training_file
+import dgl
 
 from util import save_model, load_model, set_env, get_device, get_args
 
 
-def train_model(args, data_loaders, data_lengths, DEVICE):
-    # model = Model(args, data_lengths['nuniq_items'], DEVICE)
-    model = RecTrans(args, data_lengths['nuniq_items'], DEVICE)
+def train_model(args, data_loaders, data_lengths, DEVICE, encoder='lstm'):
+    if encoder == 'lstm':
+        model = Model(args, data_lengths['nuniq_items'], DEVICE)
+    else:
+        assert encoder == 'transformer'
+        model = RecTrans(args, data_lengths['nuniq_items'], DEVICE)
     # if torch.cuda.is_available():
     #     if torch.cuda.device_count() > 1:
     #         model = nn.DataParallel(model)
@@ -39,7 +43,8 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
             running_loss = 0.0
             # state_h, state_c = model.init_state(args.sequence_length)
 
-            # state_h = model.init_state(args.sequence_length)
+            if encoder == 'lstm':
+                state_h = model.init_state(args.sequence_length)
 
             for batch, (user_id, sequence) in enumerate(data_loaders[phase]):
                 if phase == 'train':
@@ -48,11 +53,11 @@ def train_model(args, data_loaders, data_lengths, DEVICE):
                 x = sequence[:, :-1].to(DEVICE)     # size: (batch_size, max_seq_length)
                 y = sequence[:, -1].to(DEVICE)      # size: (batch_size)
 
-                # state_h = tuple([each.data for each in state_h])
-
-                # y_pred, (state_h, state_c) = model(x, (state_h, state_c), DEVICE)
-                # y_pred, state_h = model(x, state_h)     # y_pred size: (batch_size, item_count)
-                y_pred = model(x)
+                if encoder == 'lstm':
+                    state_h = tuple([each.data for each in state_h])
+                    y_pred, state_h = model(x, state_h)     # y_pred size: (batch_size, item_count)
+                else:
+                    y_pred = model(x)
 
                 if phase == 'val':
                     pred_id = torch.argmax(y_pred, dim=1)
@@ -114,6 +119,6 @@ if __name__ == '__main__':
     data_lengths = {"train": len(train_loader), "val": len(val_loader), "nuniq_items": 21077}   # 21077 items
     print('training on', DEVICE)
 
-    model = train_model(args, data_loaders, data_lengths, DEVICE)
+    model = train_model(args, data_loaders, data_lengths, DEVICE, args.encoder_type)
     save_model(model, args.model_dir)
 

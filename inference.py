@@ -4,26 +4,28 @@ from model import Model, RecTrans
 from dataset import Dataset
 from torch.utils.data import DataLoader
 from util import load_model, get_args, get_device, set_env
+import dgl
 
 
 @torch.no_grad()
-def inference(args, dataloder, model, output_dir, DEVICE):
+def inference(args, dataloder, model, output_dir, DEVICE, encoder='lstm'):
     f = open(output_dir, 'w')
 
     model = model.to(DEVICE)
     model.eval()
-    # state_h, state_c = model.init_state(args.sequence_length)
-    # state_h = state_h.to(DEVICE)
-    # state_c = state_h.to(DEVICE)
+    if encoder == 'lstm':
+        state_h, state_c = model.init_state(args.sequence_length)
+        state_h = state_h.to(DEVICE)
+        state_c = state_h.to(DEVICE)
 
     i = 0
     for batch, (user_id, sequence) in enumerate(dataloder):
         sequence = sequence[:, 1:].to(DEVICE)
 
-        # y_pred, (state_h, state_c) = model(sequence, (state_h, state_c))
-        #y = int(torch.argmax(y_pred).data)
-        #f.write('%s\n' % y)
-        y_pred = model(sequence)
+        if encoder == 'lstm':
+            y_pred, (state_h, state_c) = model(sequence, (state_h, state_c))
+        else:
+            y_pred = model(sequence)
         topk = torch.topk(y_pred, 10)[1].data[0].tolist()
         f.write('%s\n' % topk)
 
@@ -36,6 +38,7 @@ if __name__ == '__main__':
     set_env(kind='zf')   # kind=['ml' or 'zf']
     args = get_args()
     DEVICE = get_device()
+    encoder = args.encoder_type
 
     data_dir = os.environ['SM_CHANNEL_EVAL']
     # model_dir = os.environ['SM_CHANNEL_MODEL']
@@ -48,13 +51,16 @@ if __name__ == '__main__':
     dataset = Dataset(data_path, max_len=args.sequence_length)
     # max_item_count = 3706     # for data_ml
     max_item_count = 21077      # for data_zf
-    # model = Model(args, max_item_count, DEVICE)
-    model = RecTrans(args, max_item_count, DEVICE)
+    if encoder == 'lstm':
+        model = Model(args, max_item_count, DEVICE)
+    else:
+        assert encoder == 'transformer'
+        model = RecTrans(args, max_item_count, DEVICE)
 
     loader = DataLoader(dataset, 1)
 
     model = load_model(model, model_dir)
     model = model.to(DEVICE)
 
-    inference(args, loader, model, output_path, DEVICE)
+    inference(args, loader, model, output_path, DEVICE, encoder)
     print('finish!')

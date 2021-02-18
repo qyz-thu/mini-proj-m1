@@ -6,20 +6,21 @@ import tarfile
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--max-epochs', type=int, default=1)
+    parser.add_argument('--max-epochs', type=int, default=9)
     
     parser.add_argument('--batch-size', type=int, default=32)
-    parser.add_argument('--lstm-layers', type=int, default=3)
-
-    parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--sequence-length', type=int, default=64)
+    parser.add_argument('--encoder_type', default='lstm')
+
+    parser.add_argument('--lstm-layers', type=int, default=3)
+    parser.add_argument('--lr', type=float, default=0.001)
     parser.add_argument('--lstm-size', type=int, default=256)
-    parser.add_argument('--embedding-dim', type=int, default=128)
+    parser.add_argument('--embedding-dim', type=int, default=256)
 
     parser.add_argument('--num_head', type=int, default=1)
     parser.add_argument('--transformer_layer', type=int, default=1)
     parser.add_argument('--linear_hidden_size', type=int, default=256)
-    parser.add_argument('--dropout', type=float, default=0.7)
+    parser.add_argument('--dropout', type=float, default=0.2)
 
     parser.add_argument('--data_dir', default='./data/')
     parser.add_argument('--eval_dir', default='./data-zf')
