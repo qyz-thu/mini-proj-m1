@@ -1,5 +1,6 @@
 import random
 import os
+import json
 random.seed(2021)
 
 
@@ -36,9 +37,35 @@ def augment_training_file(data_path, out_path, seq_len=64, win_size=32):
             # writer.write(user_id + ':' + ','.join(item_id[index:]) + '\n')
 
 
+def get_adj_list(data_path, out_path):
+    """
+    Create the adjacency list for item graph. Items next to each other are considered connected in the graph.
+    """
+    adj_list = dict()
+    with open(data_path) as f, open(out_path, 'w') as writer:
+        for line in f:
+            tokens = line.strip().split(':')
+            item_id = tokens[1].split(',')
+            for i in range(len(item_id)):
+                item = item_id[i]
+                if item not in adj_list:
+                    adj_list[item] = dict()
+                if i == 0:
+                    continue
+                prev_item = item_id[i - 1]
+                if item not in adj_list[prev_item]:
+                    adj_list[prev_item][item] = 0
+                adj_list[prev_item][item] += 1
+                if prev_item not in adj_list[item]:
+                    adj_list[item][prev_item] = 0
+                adj_list[item][prev_item] += 1
+        json.dump(adj_list, writer)
+
+
 def main():
-    split_training_set('data/train_data.txt', 'data')
-    augment_training_file('data/train.txt', 'data/aug_train.txt', win_size=63)
+    # split_training_set('data/train_data.txt', 'data')
+    # augment_training_file('data/train.txt', 'data/aug_train.txt', win_size=63)
+    get_adj_list('data/train.txt', 'data/adj_list.txt')
 
 
 main()
