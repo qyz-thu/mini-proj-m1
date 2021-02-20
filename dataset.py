@@ -58,9 +58,7 @@ class Dataset(torch.utils.data.Dataset):
 
         graph = dgl.DGLGraph()
 
-        # todo: use Tensor instead
-        # return (torch.tensor(self.dataset.loc[index]['user_id']), torch.LongTensor(self.dataset.loc[index]['sequence']))
-        return (graph, torch.LongTensor(sequence))
+        return graph, torch.Tensor(sequence).long()
 
 
 if __name__ == '__main__' :
