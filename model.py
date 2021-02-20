@@ -47,10 +47,6 @@ class RecTrans(nn.Module):
         super(RecTrans, self).__init__()
         self.args = args
         self.device = device
-        # self.hidden_size = args.hidden_size
-        # self.encoder_layer = args.encoder_layer
-        # self.decoder_layer = args.decoder_layer
-        # self.linear_hidden_size = args.linear_hidden_size
 
         self.embedding = nn.Embedding(num_embeddings=n_items + 1, embedding_dim=args.embedding_dim)
         self.transformer_layer = TransformerEncoderLayer(

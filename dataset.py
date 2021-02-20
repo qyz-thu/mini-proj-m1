@@ -1,18 +1,21 @@
 import torch
 import pandas as pd
+import json
+import dgl
 from collections import Counter
 from util import get_device
 
 
 # 'train_data.txt'
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, file_name, max_len=128):
+    def __init__(self, file_name, adj_list_path, max_len=128):
         self.file_name = file_name
-        self.max_len = max_len + 1  ## for GT in test set
-        #self.max_len = max_len  ## for GT in test set
+        self.max_len = max_len + 1  # for GT in test set
+        # self.max_len = max_len
 
         self.dataset = self.load_dataset()
         self.dataset = self.dataset.reset_index()
+        self.adj_list = self.load_adj_list(adj_list_path)
 
         self.dataset.set_index("idx", inplace=True)  # to use index for comparing timestamp
         self.count = len(self.dataset)
@@ -32,11 +35,10 @@ class Dataset(torch.utils.data.Dataset):
 
         return _seq
 
-    def str_to_list_max_one(self, seq):
-        _seq = seq.split(',')
-        _seq = _seq[-1:]
-
-        return _seq
+    def load_adj_list(self, path):
+        with open(path) as f:
+            obj = json.load(f)
+        return obj
 
     def load_dataset(self):
         names = ['user_id', 'sequence']
@@ -51,7 +53,14 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         # return input_seq and gt
-        return (torch.tensor(self.dataset.loc[index]['user_id']), torch.LongTensor(self.dataset.loc[index]['sequence']))
+        user_id = self.dataset.loc[index]['user_id']
+        sequence = self.dataset.loc[index]['sequence']
+
+        graph = dgl.DGLGraph()
+
+        # todo: use Tensor instead
+        # return (torch.tensor(self.dataset.loc[index]['user_id']), torch.LongTensor(self.dataset.loc[index]['sequence']))
+        return (graph, torch.LongTensor(sequence))
 
 
 if __name__ == '__main__' :

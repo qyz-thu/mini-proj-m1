@@ -3,7 +3,7 @@ import torch
 from model import Model, RecTrans
 from dataset import Dataset
 from torch.utils.data import DataLoader
-from util import load_model, get_args, get_device, set_env
+from util import load_model, get_args, get_device, set_env, collate
 import dgl
 
 
@@ -47,8 +47,9 @@ if __name__ == '__main__':
     output_dir = os.environ['SM_OUTPUT_DATA_DIR']
     data_path = os.path.join(data_dir, 'test_seq_data.txt')
     output_path = os.path.join(output_dir, 'output.csv')
+    graph_path = os.path.join(args.graph_dir, 'adj_list.txt')
 
-    dataset = Dataset(data_path, max_len=args.sequence_length)
+    dataset = Dataset(data_path, graph_path, max_len=args.sequence_length)
     # max_item_count = 3706     # for data_ml
     max_item_count = 21077      # for data_zf
     if encoder == 'lstm':
@@ -57,7 +58,7 @@ if __name__ == '__main__':
         assert encoder == 'transformer'
         model = RecTrans(args, max_item_count, DEVICE)
 
-    loader = DataLoader(dataset, 1)
+    loader = DataLoader(dataset, 1, collate_fn=collate)
 
     model = load_model(model, model_dir)
     model = model.to(DEVICE)

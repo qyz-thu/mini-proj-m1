@@ -2,6 +2,7 @@ import torch
 import os
 import argparse
 import tarfile
+import dgl
 
 
 def get_args():
@@ -24,6 +25,7 @@ def get_args():
 
     parser.add_argument('--data_dir', default='./data/')
     parser.add_argument('--eval_dir', default='./data-zf')
+    parser.add_argument('--graph_dir', default='./data/')
     parser.add_argument('--model_dir', default='./model/')
     parser.add_argument('--output_dir', default='./output/')
     parser.add_argument('--validate', action='store_true')
@@ -67,3 +69,14 @@ def load_model(model, model_dir):
     model_path = os.path.join(model_dir, 'model.pth')
     model.load_state_dict(torch.load(model_path))
     return model
+
+
+def collate(item):
+    """Customized collate function for data loader"""
+    graphs = [i[0] for i in item]
+    tensors = [i[1] for i in item]
+    batched_tensor = torch.stack(tensors, dim=0)
+    batched_graph = dgl.batch(graphs)
+
+    return batched_graph, batched_tensor
+

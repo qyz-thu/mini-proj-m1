@@ -11,7 +11,7 @@ from inference import inference
 from data_process import augment_training_file
 import dgl
 
-from util import save_model, load_model, set_env, get_device, get_args
+from util import save_model, load_model, set_env, get_device, get_args, collate
 
 
 def train_model(args, data_loaders, data_lengths, DEVICE, encoder='lstm'):
@@ -109,12 +109,13 @@ if __name__ == '__main__':
         os.makedirs('model')
     train_data_path = os.path.join(args.data_dir, 'aug_train.txt')
     val_data_path = os.path.join(args.data_dir, 'valid.txt')
+    graph_path = os.path.join(args.graph_dir, 'adj_list.txt')
 
-    train_dataset = Dataset(train_data_path, max_len=args.sequence_length)
-    val_dataset = Dataset(val_data_path, max_len=args.sequence_length)
+    train_dataset = Dataset(train_data_path, graph_path, max_len=args.sequence_length)
+    val_dataset = Dataset(val_data_path, graph_path, max_len=args.sequence_length)
 
-    train_loader = DataLoader(train_dataset, args.batch_size)
-    val_loader = torch.utils.data.DataLoader(val_dataset, args.batch_size)
+    train_loader = DataLoader(train_dataset, args.batch_size, collate_fn=collate)
+    val_loader = torch.utils.data.DataLoader(val_dataset, args.batch_size, collate_fn=collate)
     data_loaders = {"train": train_loader, "val": val_loader}
     data_lengths = {"train": len(train_loader), "val": len(val_loader), "nuniq_items": 21077}   # 21077 items
     print('training on', DEVICE)
