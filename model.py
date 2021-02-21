@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer, ReLU
-from dgl.nn import GraphConv
+from dgl.nn import GraphConv, GATConv
 import dgl
 import torch.nn.functional as F
 import os
@@ -10,22 +10,23 @@ import os
 class GNN(nn.Module):
     def __init__(self, args):
         super(GNN, self).__init__()
-        # self.gnn1 = GraphConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, allow_zero_in_degree=True)
-        # self.gnn2 = GraphConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, allow_zero_in_degree=True)
-
+        if args.gnn_type == 'gcn':
+            self.use_gcn = True
+        else:
+            assert args.gnn_type == 'gat'
+            self.use_gcn = False
         self.net = nn.ModuleList()
         for i in range(args.gnn_layers):
-            self.net.append(GraphConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, allow_zero_in_degree=True))
+            if self.use_gcn:
+                self.net.append(GraphConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, allow_zero_in_degree=True))
+            else:
+                self.net.append(GATConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, num_heads=args.gat_num_head, allow_zero_in_degree=True))
             self.net.append(ReLU())
 
     def forward(self, graph, x):
-        # h = self.gnn1(graph, x)
-        # h = torch.relu(h)
-        # h = self.gnn2(graph, h)
-        # h = torch.relu(h)
         for i, layer in enumerate(self.net):
             if i % 2 == 0:
-                x = layer(graph, x)
+                x = layer(graph, x) if self.use_gcn else torch.mean(layer(graph, x), dim=1)
             else:
                 x = layer(x)
 

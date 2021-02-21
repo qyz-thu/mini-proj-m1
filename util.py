@@ -18,12 +18,14 @@ def get_args():
     parser.add_argument('--lstm-size', type=int, default=256)
     parser.add_argument('--embedding-dim', type=int, default=256)
 
-    parser.add_argument('--num_head', type=int, default=1)
+    parser.add_argument('--transformer_num_head', type=int, default=1)
     parser.add_argument('--transformer_layer', type=int, default=1)
     parser.add_argument('--linear_hidden_size', type=int, default=256)
     parser.add_argument('--dropout', type=float, default=0.2)
 
     parser.add_argument('--gnn_layers', type=int, default=1)
+    parser.add_argument('--gat_num_head', type=int, default=1)
+    parser.add_argument('--gnn_type', default='gcn')
 
     parser.add_argument('--data_dir', default='./data/')
     parser.add_argument('--eval_dir', default='./data-zf')
