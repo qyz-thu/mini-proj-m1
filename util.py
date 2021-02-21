@@ -23,6 +23,8 @@ def get_args():
     parser.add_argument('--linear_hidden_size', type=int, default=256)
     parser.add_argument('--dropout', type=float, default=0.2)
 
+    parser.add_argument('--gnn_layers', type=int, default=1)
+
     parser.add_argument('--data_dir', default='./data/')
     parser.add_argument('--eval_dir', default='./data-zf')
     parser.add_argument('--graph_dir', default='./data/')
