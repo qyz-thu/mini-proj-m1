@@ -46,18 +46,19 @@ def train_model(args, data_loaders, data_lengths, DEVICE, encoder='lstm'):
             if encoder == 'lstm':
                 state_h = model.init_state(args.sequence_length)
 
-            for batch, (user_id, sequence) in enumerate(data_loaders[phase]):
+            for batch, (graph, graph_nodes, y) in enumerate(data_loaders[phase]):
                 if phase == 'train':
                     optimizer.zero_grad()
 
-                x = sequence[:, :-1].to(DEVICE)     # size: (batch_size, max_seq_length)
-                y = sequence[:, -1].to(DEVICE)      # size: (batch_size)
+                graph = graph.to(DEVICE)
+                graph_nodes = graph_nodes.to(DEVICE)     # size: (batch_size, max_seq_length)
+                y = y.to(DEVICE)      # size: (batch_size)
 
                 if encoder == 'lstm':
                     state_h = tuple([each.data for each in state_h])
-                    y_pred, state_h = model(x, state_h)     # y_pred size: (batch_size, item_count)
+                    y_pred, state_h = model(graph, graph_nodes, state_h)     # y_pred size: (batch_size, item_count)
                 else:
-                    y_pred = model(x)
+                    y_pred = model(graph, graph_nodes)
 
                 if phase == 'val':
                     pred_id = torch.argmax(y_pred, dim=1)
@@ -114,8 +115,8 @@ if __name__ == '__main__':
     train_dataset = Dataset(train_data_path, graph_path, max_len=args.sequence_length)
     val_dataset = Dataset(val_data_path, graph_path, max_len=args.sequence_length)
 
-    train_loader = DataLoader(train_dataset, args.batch_size, collate_fn=collate)
-    val_loader = torch.utils.data.DataLoader(val_dataset, args.batch_size, collate_fn=collate)
+    train_loader = DataLoader(train_dataset, args.batch_size, collate_fn=collate, drop_last=True)
+    val_loader = torch.utils.data.DataLoader(val_dataset, args.batch_size, collate_fn=collate, drop_last=True)
     data_loaders = {"train": train_loader, "val": val_loader}
     data_lengths = {"train": len(train_loader), "val": len(val_loader), "nuniq_items": 21077}   # 21077 items
     print('training on', DEVICE)

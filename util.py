@@ -7,7 +7,7 @@ import dgl
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--max-epochs', type=int, default=9)
+    parser.add_argument('--max-epochs', type=int, default=1)
     
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--sequence-length', type=int, default=64)
@@ -74,9 +74,11 @@ def load_model(model, model_dir):
 def collate(item):
     """Customized collate function for data loader"""
     graphs = [i[0] for i in item]
-    tensors = [i[1] for i in item]
-    batched_tensor = torch.stack(tensors, dim=0)
+    graph_nodes = [i[1] for i in item]
+    target = [i[2] for i in item]
+    batched_graph_nodes = torch.cat(graph_nodes, dim=0)
     batched_graph = dgl.batch(graphs)
+    batched_target = torch.stack(target, dim=0)
 
-    return batched_graph, batched_tensor
+    return batched_graph, batched_graph_nodes, batched_target
 

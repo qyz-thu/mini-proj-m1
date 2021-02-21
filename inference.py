@@ -19,13 +19,14 @@ def inference(args, dataloder, model, output_dir, DEVICE, encoder='lstm'):
         state_c = state_h.to(DEVICE)
 
     i = 0
-    for batch, (user_id, sequence) in enumerate(dataloder):
-        sequence = sequence[:, 1:].to(DEVICE)
+    for batch, (graph, graph_nodes, _) in enumerate(dataloder):
+        graph_nodes = graph_nodes.to(DEVICE)
+        graph = graph.to(DEVICE)
 
         if encoder == 'lstm':
-            y_pred, (state_h, state_c) = model(sequence, (state_h, state_c))
+            y_pred, (state_h, state_c) = model(graph, graph_nodes, (state_h, state_c))
         else:
-            y_pred = model(sequence)
+            y_pred = model(graph, graph_nodes)
         topk = torch.topk(y_pred, 10)[1].data[0].tolist()
         f.write('%s\n' % topk)
 
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     output_path = os.path.join(output_dir, 'output.csv')
     graph_path = os.path.join(args.graph_dir, 'adj_list.txt')
 
-    dataset = Dataset(data_path, graph_path, max_len=args.sequence_length)
+    dataset = Dataset(data_path, graph_path, max_len=args.sequence_length, is_test=True)
     # max_item_count = 3706     # for data_ml
     max_item_count = 21077      # for data_zf
     if encoder == 'lstm':

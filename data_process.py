@@ -47,12 +47,12 @@ def get_adj_list(data_path, out_path):
             tokens = line.strip().split(':')
             item_id = tokens[1].split(',')
             for i in range(len(item_id)):
-                item = item_id[i]
+                item = int(item_id[i])
                 if item not in adj_list:
                     adj_list[item] = dict()
                 if i == 0:
                     continue
-                prev_item = item_id[i - 1]
+                prev_item = int(item_id[i - 1])
                 if item not in adj_list[prev_item]:
                     adj_list[prev_item][item] = 0
                 adj_list[prev_item][item] += 1

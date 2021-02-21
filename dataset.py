@@ -8,10 +8,11 @@ from util import get_device
 
 # 'train_data.txt'
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, file_name, adj_list_path, max_len=128):
+    def __init__(self, file_name, adj_list_path, max_len=128, is_test=False):
         self.file_name = file_name
         self.max_len = max_len + 1  # for GT in test set
         # self.max_len = max_len
+        self.is_test = is_test
 
         self.dataset = self.load_dataset()
         self.dataset = self.dataset.reset_index()
@@ -55,13 +56,29 @@ class Dataset(torch.utils.data.Dataset):
         # return input_seq and gt
         user_id = self.dataset.loc[index]['user_id']
         sequence = self.dataset.loc[index]['sequence']
+        target = [sequence[-1]]
+        if not self.is_test:
+            sequence = sequence[:-1]
+        for start_index in range(len(sequence)):
+            if sequence[start_index] > 0:
+                break
+        graph_nodes = sequence[start_index:]
+        # graph_size = len(graph_nodes)
+        edges = [[], []]
+        for i in range(len(graph_nodes)):
+            for j in range(i + 1, len(graph_nodes)):
+                if str(graph_nodes[j]) not in self.adj_list:
+                    continue
+                if str(graph_nodes[i]) in self.adj_list[str(graph_nodes[j])]:
+                    edges[0].extend([i, j])
+                    edges[1].extend([j, i])
 
-        graph = dgl.DGLGraph()
+        graph = dgl.graph((edges[0], edges[1]), num_nodes=len(graph_nodes))
 
-        return graph, torch.Tensor(sequence).long()
+        return graph, torch.Tensor(graph_nodes).long(), torch.Tensor(target).long(),
 
 
-if __name__ == '__main__' :
+if __name__ == '__main__':
     dataset = Dataset('./data/train_data.txt', 3)
     print(dataset.uniq_items)
     print(dataset.count)
