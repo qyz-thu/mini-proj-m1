@@ -105,4 +105,5 @@ def main():
     graph_edge_statistics('data/adj_list.txt')
 
 
-main()
+if __name__ == "__main__":
+    main()

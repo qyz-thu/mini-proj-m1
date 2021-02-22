@@ -82,7 +82,7 @@ class Dataset(torch.utils.data.Dataset):
 
         graph = dgl.graph((edges[0], edges[1]), num_nodes=len(graph_nodes))
         graph = dgl.add_self_loop(graph)
-        edge_type.extend([0 for _ in range(len(graph_nodes))])
+        edge_type.extend([2 for _ in range(len(graph_nodes))])
 
         return graph, torch.Tensor(graph_nodes).long(), torch.Tensor(target).long(), torch.Tensor(edge_type).long()
 
