@@ -47,6 +47,7 @@ if __name__ == '__main__':
     model_dir = './model/'
     output_dir = os.environ['SM_OUTPUT_DATA_DIR']
     data_path = os.path.join(data_dir, 'test_seq_data.txt')
+    # data_path = os.path.join(data_dir, 'train_data.txt')
     output_path = os.path.join(output_dir, 'output.csv')
     graph_path = os.path.join(args.graph_dir, 'adj_list.txt')
 

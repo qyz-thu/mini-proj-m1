@@ -23,7 +23,7 @@ def get_args():
     parser.add_argument('--linear_hidden_size', type=int, default=256)
     parser.add_argument('--dropout', type=float, default=0.2)
 
-    parser.add_argument('--gnn_layers', type=int, default=1)
+    parser.add_argument('--gnn_layers', type=int, default=2)
     parser.add_argument('--gat_num_head', type=int, default=1)
     parser.add_argument('--gnn_type', default='gcn')
 
