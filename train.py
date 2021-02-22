@@ -8,7 +8,6 @@ import os
 from model import Model, RecTrans
 from dataset import Dataset
 from inference import inference
-from data_process import augment_training_file
 import dgl
 
 from util import save_model, load_model, set_env, get_device, get_args, collate
@@ -46,17 +45,18 @@ def train_model(args, data_loaders, data_lengths, DEVICE, encoder='lstm'):
             if encoder == 'lstm':
                 state_h = model.init_state(args.sequence_length)
 
-            for batch, (graph, graph_nodes, y) in enumerate(data_loaders[phase]):
+            for batch, (graph, graph_nodes, y, edge_types) in enumerate(data_loaders[phase]):
                 if phase == 'train':
                     optimizer.zero_grad()
 
                 graph = graph.to(DEVICE)
                 graph_nodes = graph_nodes.to(DEVICE)     # size: (batch_size, max_seq_length)
                 y = y.to(DEVICE)      # size: (batch_size)
+                edge_types = edge_types.to(DEVICE)
 
                 if encoder == 'lstm':
                     state_h = tuple([each.data for each in state_h])
-                    y_pred, state_h = model(graph, graph_nodes, state_h)     # y_pred size: (batch_size, item_count)
+                    y_pred, state_h = model(graph, graph_nodes, state_h, edge_types)     # y_pred size: (batch_size, item_count)
                 else:
                     y_pred = model(graph, graph_nodes)
 

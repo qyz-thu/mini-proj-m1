@@ -62,10 +62,47 @@ def get_adj_list(data_path, out_path):
         json.dump(adj_list, writer)
 
 
+def graph_edge_statistics(data_path):
+    with open(data_path) as f:
+        adj_list = json.load(f)
+    edge_count = list()
+    for node in adj_list:
+        for neighbor in adj_list[node]:
+            edge_count.append(adj_list[node][neighbor])
+
+    edge_count.sort()
+    print(len(edge_count))
+    # print(edge_count[:50])
+    # print(edge_count[-50:])
+    over1 = False
+    over5 = False
+    over100 = False
+    over1000 = False
+    over10 = False
+    for i in range(len(edge_count)):
+        if not over1 and edge_count[i] > 1:
+            print('less than 1: %d' % i)
+            over1 = True
+        if not over5 and edge_count[i] > 5:
+            print('less than 5: %d' % i)
+            over5 = True
+        if not over10 and edge_count[i] > 10:
+            print('less than 10: %d' % i)
+            over10 = True
+        if not over100 and edge_count[i] > 100:
+            print('less than 100: %d' % i)
+            over100 = True
+        if not over1000 and edge_count[i] > 1000:
+            print('less than 1000: %d' % i)
+            over1000 = True
+            break
+
+
 def main():
     # split_training_set('data/train_data.txt', 'data')
     # augment_training_file('data/train.txt', 'data/aug_train.txt', win_size=63)
-    get_adj_list('data/train.txt', 'data/adj_list.txt')
+    # get_adj_list('data/train.txt', 'data/adj_list.txt')
+    graph_edge_statistics('data/adj_list.txt')
 
 
 main()

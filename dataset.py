@@ -65,6 +65,7 @@ class Dataset(torch.utils.data.Dataset):
         graph_nodes = sequence[start_index:]
         # graph_size = len(graph_nodes)
         edges = [[], []]
+        edge_type = []
         for i in range(len(graph_nodes)):
             for j in range(i + 1, len(graph_nodes)):
                 if str(graph_nodes[j]) not in self.adj_list:
@@ -72,11 +73,18 @@ class Dataset(torch.utils.data.Dataset):
                 if str(graph_nodes[i]) in self.adj_list[str(graph_nodes[j])]:
                     edges[0].extend([i, j])
                     edges[1].extend([j, i])
+                    if self.adj_list[str(graph_nodes[j])][str(graph_nodes[i])] == 1:
+                        edge_type.append(0)
+                    elif self.adj_list[str(graph_nodes[j])][str(graph_nodes[i])] <= 5:
+                        edge_type.append(1)
+                    else:
+                        edge_type.append(2)
 
         graph = dgl.graph((edges[0], edges[1]), num_nodes=len(graph_nodes))
         graph = dgl.add_self_loop(graph)
+        edge_type.extend([0 for _ in range(len(graph_nodes))])
 
-        return graph, torch.Tensor(graph_nodes).long(), torch.Tensor(target).long(),
+        return graph, torch.Tensor(graph_nodes).long(), torch.Tensor(target).long(), torch.Tensor(edge_type).long()
 
 
 if __name__ == '__main__':

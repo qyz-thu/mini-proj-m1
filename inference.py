@@ -19,12 +19,13 @@ def inference(args, dataloder, model, output_dir, DEVICE, encoder='lstm'):
         state_c = state_h.to(DEVICE)
 
     i = 0
-    for batch, (graph, graph_nodes, _) in enumerate(dataloder):
+    for batch, (graph, graph_nodes, _, edge_type) in enumerate(dataloder):
         graph_nodes = graph_nodes.to(DEVICE)
         graph = graph.to(DEVICE)
+        edge_type = edge_type.to(DEVICE)
 
         if encoder == 'lstm':
-            y_pred, (state_h, state_c) = model(graph, graph_nodes, (state_h, state_c))
+            y_pred, (state_h, state_c) = model(graph, graph_nodes, (state_h, state_c), edge_type)
         else:
             y_pred = model(graph, graph_nodes)
         topk = torch.topk(y_pred, 10)[1].data[0].tolist()

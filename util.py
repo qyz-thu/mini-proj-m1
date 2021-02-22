@@ -25,7 +25,8 @@ def get_args():
 
     parser.add_argument('--gnn_layers', type=int, default=2)
     parser.add_argument('--gat_num_head', type=int, default=1)
-    parser.add_argument('--gnn_type', default='gcn')
+    parser.add_argument('--gnn_type', default='ggsnn')
+    parser.add_argument('--ggsnn_step', type=int, default=2)
 
     parser.add_argument('--data_dir', default='./data/')
     parser.add_argument('--eval_dir', default='./data-zf')
@@ -80,9 +81,13 @@ def collate(item):
     graphs = [i[0] for i in item]
     graph_nodes = [i[1] for i in item]
     target = [i[2] for i in item]
+    edge_types = [i[3] for i in item]
     batched_graph_nodes = torch.cat(graph_nodes, dim=0)
     batched_graph = dgl.batch(graphs)
     batched_target = torch.stack(target, dim=0)
+    batched_edge_types = torch.cat(edge_types, dim=0)
+    if batched_edge_types.size()[0] != 0:
+        assert batched_edge_types.min() >= 0 and batched_edge_types.max() < 3
 
-    return batched_graph, batched_graph_nodes, batched_target
+    return batched_graph, batched_graph_nodes, batched_target, batched_edge_types
 

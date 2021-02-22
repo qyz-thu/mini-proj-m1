@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import TransformerEncoder, TransformerEncoderLayer, ReLU
-from dgl.nn import GraphConv, GATConv
+from dgl.nn import GraphConv, GATConv, GatedGraphConv
 import dgl
 import torch.nn.functional as F
 import os
@@ -56,15 +56,18 @@ class Model(nn.Module):
         )
         self.dropout = nn.Dropout(0.1)
         self.fc = nn.Linear(self.lstm_size, n_items + 1)
-        self.gnn = GNN(args)
+        if args.gnn_type == 'ggsnn':
+            self.gnn = GatedGraphConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, n_steps=args.ggsnn_step, n_etypes=3)
+        else:
+            self.gnn = GNN(args)
         self.gnn = self.gnn.to(DEVICE)
 
-    def forward(self, graph, graph_nodes, prev_state):
-        # embed = self.embedding(x)   # x[256,128], embed[256,128]
-        # embed = embed.to(self.DEVICE)
+    def forward(self, graph, graph_nodes, prev_state, edge_type=None):  # edge_type is required is use Gate Graph Conv
         graph_embed = self.embedding(graph_nodes)
-        # graph_embed = graph_embed.to(self.DEVICE)
-        graph_embed = self.gnn(graph, graph_embed)
+        if self.args.gnn_type == 'ggsnn':
+            graph_embed = self.gnn(graph, graph_embed, edge_type)
+        else:
+            graph_embed = self.gnn(graph, graph_embed)
         graph.ndata['h'] = graph_embed
         graphs = dgl.unbatch(graph)
         embed_list = []
