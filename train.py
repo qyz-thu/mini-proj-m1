@@ -58,7 +58,7 @@ def train_model(args, data_loaders, data_lengths, DEVICE, encoder='lstm'):
                     state_h = tuple([each.data for each in state_h])
                     y_pred, state_h = model(graph, graph_nodes, state_h, edge_types)     # y_pred size: (batch_size, item_count)
                 else:
-                    y_pred = model(graph, graph_nodes)
+                    y_pred = model(graph, graph_nodes, edge_types)
 
                 if phase == 'val':
                     pred_id = torch.argmax(y_pred, dim=1)

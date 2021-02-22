@@ -62,7 +62,7 @@ class Model(nn.Module):
             self.gnn = GNN(args)
         self.gnn = self.gnn.to(DEVICE)
 
-    def forward(self, graph, graph_nodes, prev_state, edge_type=None):  # edge_type is required is use Gate Graph Conv
+    def forward(self, graph, graph_nodes, prev_state, edge_type=None):  # edge_type is required if uses Gated Graph Conv
         graph_embed = self.embedding(graph_nodes)
         if self.args.gnn_type == 'ggsnn':
             graph_embed = self.gnn(graph, graph_embed, edge_type)
@@ -99,21 +99,42 @@ class RecTrans(nn.Module):
         self.args = args
         self.device = device
 
+        self.sequence_length = args.sequence_length
+        self.embedding_dim = args.embedding_dim
+
         self.embedding = nn.Embedding(num_embeddings=n_items + 1, embedding_dim=args.embedding_dim)
         self.transformer_layer = TransformerEncoderLayer(
             d_model=args.embedding_dim,
-            nhead=args.num_head,
+            nhead=args.transformer_num_head,
             dim_feedforward=args.linear_hidden_size,
             dropout=args.dropout,
         )
         self.transformer = TransformerEncoder(self.transformer_layer, num_layers=args.transformer_layer)
         self.fc = nn.Linear(args.embedding_dim, n_items + 1)
-        self.gnn = GNN(args)
+        if args.gnn_type == 'ggsnn':
+            self.gnn = GatedGraphConv(in_feats=args.embedding_dim, out_feats=args.embedding_dim, n_steps=args.ggsnn_step, n_etypes=3)
+        else:
+            self.gnn = GNN(args)
 
-    def forward(self, x, graph, graph_nodes):
-        embed = self.embedding(x)
-        embed = embed.to(self.device)
-        out = self.transformer(embed)
+    def forward(self, graph, graph_nodes, edge_types=None):  # edge type is required if uses Gated Graph Conv
+        graph_embed = self.embedding(graph_nodes)
+        if self.args.gnn_type == 'ggsnn':
+            graph_embed = self.gnn(graph, graph_embed, edge_types)
+        else:
+            graph_embed = self.gnn(graph, graph_embed)
+        graph.ndata['h'] = graph_embed
+        graphs = dgl.unbatch(graph)
+        embed_list = []
+        for g in graphs:
+            embed = g.ndata['h']
+            if embed.size()[0] >= self.sequence_length:
+                p_embed = embed[:self.sequence_length, :]
+            else:
+                p_embed = torch.cat([torch.zeros(self.sequence_length - embed.size()[0], self.embedding_dim).to(self.device), embed], dim=0)
+            # padded_embed = torch.stack([padded_embed, p_embed], dim=0)
+            embed_list.append(p_embed)
+        padded_embed = torch.stack(embed_list, dim=0)
+        out = self.transformer(padded_embed)
         logits = self.fc(out)
 
         return logits[:, -1, :]

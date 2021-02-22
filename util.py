@@ -11,7 +11,7 @@ def get_args():
     
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--sequence-length', type=int, default=64)
-    parser.add_argument('--encoder_type', default='lstm')
+    parser.add_argument('--encoder_type', default='transformer')
 
     parser.add_argument('--lstm-layers', type=int, default=3)
     parser.add_argument('--lr', type=float, default=0.001)
@@ -21,12 +21,12 @@ def get_args():
     parser.add_argument('--transformer_num_head', type=int, default=1)
     parser.add_argument('--transformer_layer', type=int, default=1)
     parser.add_argument('--linear_hidden_size', type=int, default=256)
-    parser.add_argument('--dropout', type=float, default=0.2)
+    parser.add_argument('--dropout', type=float, default=0.8)
 
     parser.add_argument('--gnn_layers', type=int, default=2)
     parser.add_argument('--gat_num_head', type=int, default=1)
     parser.add_argument('--gnn_type', default='ggsnn')
-    parser.add_argument('--ggsnn_step', type=int, default=2)
+    parser.add_argument('--ggsnn_step', type=int, default=3)
 
     parser.add_argument('--data_dir', default='./data/')
     parser.add_argument('--eval_dir', default='./data-zf')
@@ -86,8 +86,8 @@ def collate(item):
     batched_graph = dgl.batch(graphs)
     batched_target = torch.stack(target, dim=0)
     batched_edge_types = torch.cat(edge_types, dim=0)
-    if batched_edge_types.size()[0] != 0:
-        assert batched_edge_types.min() >= 0 and batched_edge_types.max() < 3
+    # if batched_edge_types.size()[0] != 0:
+    #     assert batched_edge_types.min() >= 0 and batched_edge_types.max() < 4
 
     return batched_graph, batched_graph_nodes, batched_target, batched_edge_types
 

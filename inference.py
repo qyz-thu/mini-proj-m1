@@ -27,7 +27,7 @@ def inference(args, dataloder, model, output_dir, DEVICE, encoder='lstm'):
         if encoder == 'lstm':
             y_pred, (state_h, state_c) = model(graph, graph_nodes, (state_h, state_c), edge_type)
         else:
-            y_pred = model(graph, graph_nodes)
+            y_pred = model(graph, graph_nodes, edge_type)
         topk = torch.topk(y_pred, 10)[1].data[0].tolist()
         f.write('%s\n' % topk)
 
